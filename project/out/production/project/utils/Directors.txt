@@ -1,0 +1,11 @@
+Quentin,Tarantino,1963-03-27,M,Pulp Fiction|Kill Bill|Django
+Unchained
+Christopher,Nolan,1970-07-30,M,Inception|Interstellar|The Dark Knight
+Steven,Spielberg,1946-12-18,M,Schindler's List|E.T.|Jurassic Park
+Greta,Gerwig,1983-08-04,F,Lady Bird|Little Women|Barbie
+David,Fincher,1962-08-28,M,Fight Club|Gone Girl|Mindhunter|House of
+Cards
+Cary,Joji Fukunaga,1977-07-10,M,No Time to Die|True Detective
+Ben,Stiller,1965-11-30,M,Severance|Zoolander|The Secret Life of
+Walter Mitty
+Aoife,McArdle,1978-05-01,F,Severance

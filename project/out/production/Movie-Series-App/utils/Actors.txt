@@ -1,0 +1,8 @@
+Marlon, Brando, 1924-03-04, M, Caucasoid
+Uma, Thurman, 1970-04-29, F, Caucasoid
+Leonardo,DiCaprio,1974-11-11,M,Caucasoid
+Morgan,Freeman,1937-06-01,M,Negroid
+Emma,Stone,1988-11-06,F,Caucasoid
+Jackie,Chan,1954-04-07,M,Asian
+Adam,Scott,1973-04-03,M,Caucasoid
+Bryan,Cranston,1956-03-07,M,Caucasoid

@@ -1,0 +1,63 @@
+SERIES:Breaking Bad,Crime,10|9|10|9
+SEASON:1, 2008:
+58,Vince Gilligan,9.1,Bryan Cranston
+48,Adam Bernstein,8.9,Bryan Cranston
+47,Jim McKay,8.7,Bryan Cranston
+47,Vince Gilligan,9.0,Bryan Cranston
+47,Tricia Brock,8.8,Bryan Cranston
+46,Nelson McCormick,8.5,Bryan Cranston
+48,Vince Gilligan,9.2,Bryan Cranston
+SEASON:2, 2009:
+47,Bryan Spicer,8.6,Bryan Cranston
+46,Vince Gilligan,9.1,Bryan Cranston
+48,Phil Abraham,8.9,Bryan Cranston
+47,Adam Bernstein,8.7,Bryan Cranston
+46,Tricia Brock,9.0,Bryan Cranston
+45,Michelle MacLaren,8.8,Bryan Cranston
+46,Vince Gilligan,9.2,Bryan Cranston
+SEASON:3, 2010:
+47,Michael Slovis,8.8,Bryan Cranston
+46,Adam Bernstein,9.0,Bryan Cranston
+45,Michelle MacLaren,9.1,Bryan Cranston
+47,Vince Gilligan,9.2,Bryan Cranston
+48,Phil Abraham,9.3,Bryan Cranston
+49,Bryan Spicer,8.9,Bryan Cranston
+50,Michelle MacLaren,9.1,Bryan Cranston
+SEASON:4, 2011:
+48,Vince Gilligan,9.4,Bryan Cranston
+47,Adam Bernstein,9.0,Bryan Cranston
+46,Phil Abraham,8.9,Bryan Cranston
+47,Michelle MacLaren,9.2,Bryan Cranston
+48,Michael Slovis,9.3,Bryan Cranston
+49,Tricia Brock,9.1,Bryan Cranston
+50,Vince Gilligan,9.5,Bryan Cranston
+SEASON:5, 2012:
+49,Michelle MacLaren,9.2,Bryan Cranston
+48,Vince Gilligan,9.4,Bryan Cranston
+47,Adam Bernstein,9.3,Bryan Cranston
+49,Phil Abraham,9.5,Bryan Cranston
+50,Michael Slovis,9.6,Bryan Cranston
+50,Michelle MacLaren,9.7,Bryan Cranston
+51,Vince Gilligan,9.9,Bryan Cranston
+SERIES:Severance,Mystery,8|9|10
+SEASON:1, 2022:
+57,Ben Stiller,8.6,Adam Scott
+48,Aoife McArdle,8.4,Adam Scott
+50,Ben Stiller,8.7,Adam Scott
+49,Aoife McArdle,8.5,Adam Scott
+47,Ben Stiller,8.6,Adam Scott
+50,Aoife McArdle,8.8,Adam Scott
+52,Ben Stiller,9.0,Adam Scott
+56,Aoife McArdle,8.9,Adam Scott
+57,Ben Stiller,9.2,Adam Scott
+SEASON:2, 2025:
+57,Ben Stiller,8.1,Adam Scott
+48,Ben Stiller,8.0,Adam Scott
+50,Ben Stiller,8.2,Adam Scott
+49,Ben Stiller,8.3,Adam Scott
+47,Ben Stiller,8.4,Adam Scott
+50,Ben Stiller,8.5,Adam Scott
+51,Ben Stiller,8.6,Adam Scott
+52,Ben Stiller,9.5,Adam Scott
+53,Ben Stiller,8.7,Adam Scott
+54,Ben Stiller,8.8,Adam Scott

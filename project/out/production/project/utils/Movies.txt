@@ -1,0 +1,4 @@
+Inception,2010,Sci-Fi,148,Christopher Nolan,8.8,Leonardo DiCaprio,1:9|2:10|3:9
+The Shawshank Redemption,1994,Drama,142,Frank Darabont,9.3,Morgan Freeman,2:10|3:10|4:9
+La La Land,2016,Musical,128,Damien Chazelle,8.0,Emma Stone,1:7|3:8|4:7
+Rush Hour,1998,Action,98,Brett Ratner,7.0,Jackie Chan,2:8|4:8
