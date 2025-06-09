@@ -14,7 +14,7 @@ import model.Actor;
 import model.Director;
 import model.Movie;
 import model.Series;
-import model.Season;
+import model.Season; // Import Season class
 import utils.DataLoader;
 import java.util.Random;
 import model.User;
@@ -27,6 +27,11 @@ import java.io.IOException;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+
+// Required for editable TableView cells
+import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.util.converter.IntegerStringConverter;
+import javafx.beans.property.SimpleIntegerProperty; // Import SimpleIntegerProperty
 
 public class MainApp extends Application {
 
@@ -182,6 +187,8 @@ public class MainApp extends Application {
         // Series table
         seriesTable = new TableView<>();
         seriesTable.setItems(filteredSeries);
+        // Enable editing for the table
+        seriesTable.setEditable(true);
 
         TableColumn<Series, String> titleCol = new TableColumn<>("Τίτλος");
         titleCol.setCellValueFactory(cellData ->
@@ -193,10 +200,37 @@ public class MainApp extends Application {
                 new SimpleStringProperty(cellData.getValue().getGenre()));
         genreCol.setPrefWidth(100);
 
-        TableColumn<Series, Number> seasonsCol = new TableColumn<>("Σεζόν");
+        // Modified: Make seasons column editable
+        TableColumn<Series, Integer> seasonsCol = new TableColumn<>("Σεζόν");
         seasonsCol.setCellValueFactory(cellData ->
-                new SimpleDoubleProperty(cellData.getValue().getSeasons().size()));
+                new SimpleIntegerProperty(cellData.getValue().getSeasons().size()).asObject());
         seasonsCol.setPrefWidth(80);
+        seasonsCol.setEditable(true); // Enable editing for this column
+        seasonsCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter())); // Use TextFieldTableCell for integer input
+
+        // Handle commit event when a season count is edited
+        seasonsCol.setOnEditCommit(event -> {
+            Series series = event.getRowValue();
+            int newSeasonCount = event.getNewValue(); // Get the new integer value
+
+            try {
+                // Ensure new season count is valid
+                if (newSeasonCount < 1) {
+                    showAlert("Σφάλμα Επεξεργασίας", "Ο αριθμός των σεζόν πρέπει να είναι τουλάχιστον 1.", Alert.AlertType.ERROR);
+                    // Revert to the old value if invalid
+                    seriesTable.refresh();
+                    return;
+                }
+
+                updateSeriesSeasons(series, newSeasonCount);
+                showAlert("Επιτυχία", "Ο αριθμός των σεζόν για τη σειρά '" + series.getTitle() + "' ενημερώθηκε σε " + newSeasonCount + ".", Alert.AlertType.INFORMATION);
+            } catch (Exception e) {
+                showAlert("Σφάλμα", "Παρουσιάστηκε σφάλμα κατά την ενημέρωση των σεζόν: " + e.getMessage(), Alert.AlertType.ERROR);
+                // Revert to the old value in case of an error
+                seriesTable.refresh();
+            }
+        });
+
 
         TableColumn<Series, Number> avgUserRatingCol = new TableColumn<>("Μ.Ο. Χρηστών");
         avgUserRatingCol.setCellValueFactory(cellData ->
@@ -211,6 +245,42 @@ public class MainApp extends Application {
 
         return mainBox;
     }
+
+    /**
+     * Updates the number of seasons for a given Series object.
+     * This method adds or removes Season objects from the series's season list
+     * to match the new desired season count.
+     * @param series The Series object to update.
+     * @param newSeasonCount The new total number of seasons for the series.
+     */
+    private void updateSeriesSeasons(Series series, int newSeasonCount) {
+        List<Season> currentSeasons = series.getSeasons();
+        int currentSeasonCount = currentSeasons.size();
+
+        if (newSeasonCount > currentSeasonCount) {
+            // Add new seasons
+            for (int i = currentSeasonCount + 1; i <= newSeasonCount; i++) {
+                // Assuming Season constructor takes season number and initializes with default episodes (e.g., 10)
+                Season newSeason = new Season(i);
+                series.addSeason(newSeason);
+            }
+        } else if (newSeasonCount < currentSeasonCount) {
+            // Remove seasons
+            // Remove from the end to avoid shifting issues
+            for (int i = currentSeasonCount - 1; i >= newSeasonCount; i--) {
+                currentSeasons.remove(i);
+            }
+        }
+        // No action needed if newSeasonCount == currentSeasonCount
+
+        // Refresh the table to reflect changes (especially if the underlying data isn't directly observable)
+        // A more robust way is to re-filter and re-sort if necessary
+        // filteredSeries.setAll(allSeries.stream().sorted(Comparator.comparingDouble(Series::getAverageUserRating).reversed()).collect(Collectors.toList()));
+        // Or simply refresh the table view
+        seriesTable.refresh();
+        performSeriesSearch(); // Re-apply filters and sort if needed, though refresh is usually enough for cell edits
+    }
+
 
     private VBox createAddMovieTab() {
         VBox mainBox = new VBox(15);
