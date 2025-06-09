@@ -42,6 +42,10 @@ public class MainApp extends Application {
     private ObservableList<Movie> filteredMovies;
     private ObservableList<Series> filteredSeries;
 
+    // New: ObservableLists for top movies and series
+    private ObservableList<Movie> topMovies;
+    private ObservableList<Series> topSeries;
+
     // Search fields for movies
     private TextField movieTitleSearchField;
     private TextField movieActorSearchField;
@@ -105,6 +109,11 @@ public class MainApp extends Application {
         filteredMovies = FXCollections.observableArrayList(allMovies);
         filteredSeries = FXCollections.observableArrayList(allSeries);
 
+        // New: Initialize top content lists and populate them
+        topMovies = FXCollections.observableArrayList();
+        topSeries = FXCollections.observableArrayList();
+        populateTopContent(); // Initial population
+
         TabPane tabPane = new TabPane();
 
         // Tabs
@@ -113,8 +122,11 @@ public class MainApp extends Application {
         Tab ratingsTab = new Tab("⭐ Αξιολογήσεις", createRatingsTab());
         Tab addMovieTab = new Tab("➕ Προσθήκη Ταινίας", createAddMovieTab());
         Tab addSeriesTab = new Tab("➕ Προσθήκη Σειράς", createAddSeriesTab());
+        // New: Top content tab
+        Tab topContentTab = new Tab("🏆 Top Ταινίες & Σειρές", createTopContentTab());
 
-        tabPane.getTabs().addAll(movieTab, seriesTab, ratingsTab, addMovieTab, addSeriesTab);
+
+        tabPane.getTabs().addAll(movieTab, seriesTab, ratingsTab, addMovieTab, addSeriesTab, topContentTab);
         tabPane.setTabClosingPolicy(TabPane.TabClosingPolicy.UNAVAILABLE);
 
         Scene scene = new Scene(tabPane, 1200, 700);
@@ -229,6 +241,7 @@ public class MainApp extends Application {
                 // Revert to the old value in case of an error
                 seriesTable.refresh();
             }
+            populateTopContent(); // New: Update top content after series seasons are updated
         });
 
 
@@ -396,7 +409,7 @@ public class MainApp extends Application {
         addMovieImdbSpinner = new Spinner<>(1.0, 10.0, 7.0, 0.1);
         addMovieImdbSpinner.setPrefWidth(100);
         addMovieImdbSpinner.setEditable(true);
-        Label imdbHint = new Label("(Αν > 7.5, θα προστεθεί στις καλύτερες ταινίες του σκηνοθέτη)");
+        Label imdbHint = new Label("(Αν > 7.5, θα προστεί στις καλύτερες ταινίες του σκηνοθέτη)");
         imdbHint.setStyle("-fx-font-size: 11px; -fx-text-fill: #6c757d;");
         imdbRow.getChildren().addAll(imdbLabel, addMovieImdbSpinner, imdbHint);
 
@@ -543,10 +556,12 @@ public class MainApp extends Application {
         }
 
         // Check if movie exists
-        boolean movieExists = allMovies.stream()
-                .anyMatch(movie -> movie.getTitle().equalsIgnoreCase(movieTitle));
+        Movie targetMovie = allMovies.stream()
+                .filter(movie -> movie.getTitle().equalsIgnoreCase(movieTitle))
+                .findFirst()
+                .orElse(null);
 
-        if (!movieExists) {
+        if (targetMovie == null) {
             showAlert("Σφάλμα", "Η ταινία δεν βρέθηκε στη βάση δεδομένων.", Alert.AlertType.ERROR);
             return;
         }
@@ -557,11 +572,18 @@ public class MainApp extends Application {
         RatingEntry newEntry = new RatingEntry(movieTitle, userInfo, description);
         ratingsData.add(newEntry);
 
+        // For simplicity, let's assume submitting a rating also updates the movie's user rating.
+        // In a real app, this would involve averaging, but for now, we'll just trigger a refresh
+        // that affects the 'top content' display.
+        // To actually update the movie's average user rating, you would need to add logic here
+        // For example: targetMovie.addUserRating(someRatingValue);
+
         // Clear form
         movieToRateField.clear();
         ratingDescriptionArea.clear();
 
         showAlert("Επιτυχία", "Η αξιολόγηση υποβλήθηκε επιτυχώς!", Alert.AlertType.INFORMATION);
+        populateTopContent(); // New: Update top content after rating submission
     }
 
     private VBox createAddSeriesTab() {
@@ -754,6 +776,7 @@ public class MainApp extends Application {
 
             // Refresh filtered movies and perform search to update display
             performMovieSearch();
+            populateTopContent(); // New: Update top content after adding a new movie
 
             // Clear form
             clearAddMovieForm();
@@ -812,6 +835,7 @@ public class MainApp extends Application {
 
             // Refresh filtered series and perform search to update display
             performSeriesSearch();
+            populateTopContent(); // New: Update top content after adding a new series
 
             // Clear form
             clearAddSeriesForm();
@@ -993,11 +1017,13 @@ public class MainApp extends Application {
         movieDirectorSearchField.clear();
         movieMinImdbSpinner.getValueFactory().setValue(0.0);
         movieMinUserRatingSpinner.getValueFactory().setValue(0.0);
+        performMovieSearch(); // Re-apply search after clearing
     }
 
     private void clearSeriesFilters() {
         seriesTitleSearchField.clear();
         seriesMinUserRatingSpinner.getValueFactory().setValue(0.0);
+        performSeriesSearch(); // Re-apply search after clearing
     }
 
     private void showAlert(String title, String message, Alert.AlertType alertType) {
@@ -1006,6 +1032,97 @@ public class MainApp extends Application {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    /**
+     * Creates the tab for displaying top-rated movies and series.
+     * @return A VBox containing the UI for the top content tab.
+     */
+    private VBox createTopContentTab() {
+        VBox mainBox = new VBox(10);
+        mainBox.setPadding(new Insets(10));
+
+        Label titleLabel = new Label("🏆 Top Ταινίες & Σειρές (Βαθμολογία ≥ 7.5)");
+        titleLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 18px; -fx-text-fill: #2c3e50;");
+        mainBox.getChildren().add(titleLabel);
+
+        // --- Top Movies Table ---
+        Label moviesLabel = new Label("Κορυφαίες Ταινίες:");
+        moviesLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 0 0 0;");
+        mainBox.getChildren().add(moviesLabel);
+
+        TableView<Movie> topMovieTable = new TableView<>();
+        topMovieTable.setItems(topMovies); // Bind to the new observable list
+
+        TableColumn<Movie, String> movieTitleCol = new TableColumn<>("Τίτλος");
+        movieTitleCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTitle()));
+        movieTitleCol.setPrefWidth(200);
+
+        TableColumn<Movie, Number> movieImdbCol = new TableColumn<>("IMDb");
+        movieImdbCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getImdbRating()));
+        movieImdbCol.setPrefWidth(80);
+
+        // Removed: movieAvgUserRatingCol from topMovieTable
+        // TableColumn<Movie, Number> movieAvgUserRatingCol = new TableColumn<>("Μ.Ο. Χρηστών");
+        // movieAvgUserRatingCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getAverageUserRating()));
+        // movieAvgUserRatingCol.setPrefWidth(100);
+
+        topMovieTable.getColumns().addAll(movieTitleCol, movieImdbCol); // Only title and IMDb
+        topMovieTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        topMovieTable.setPrefHeight(250); // Limit height for visibility
+
+        mainBox.getChildren().addAll(topMovieTable, new Separator());
+        VBox.setVgrow(topMovieTable, Priority.NEVER); // Don't grow movie table excessively
+
+        // --- Top Series Table ---
+        Label seriesLabel = new Label("Κορυφαίες Σειρές:");
+        seriesLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 14px; -fx-padding: 10 0 0 0;");
+        mainBox.getChildren().add(seriesLabel);
+
+        TableView<Series> topSeriesTable = new TableView<>();
+        topSeriesTable.setItems(topSeries); // Bind to the new observable list
+
+        TableColumn<Series, String> seriesTitleCol = new TableColumn<>("Τίτλος");
+        seriesTitleCol.setCellValueFactory(cellData -> new SimpleStringProperty(cellData.getValue().getTitle()));
+        seriesTitleCol.setPrefWidth(200);
+
+        TableColumn<Series, Number> seriesAvgUserRatingCol = new TableColumn<>("Μ.Ο. Χρηστών");
+        seriesAvgUserRatingCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getAverageUserRating()));
+        seriesAvgUserRatingCol.setPrefWidth(100);
+
+        // Removed: seriesSeasonsCol from topSeriesTable
+        // TableColumn<Series, Number> seriesSeasonsCol = new TableColumn<>("Σεζόν");
+        // seriesSeasonsCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getSeasons().size()).asObject());
+        // seriesSeasonsCol.setPrefWidth(80);
+
+
+        topSeriesTable.getColumns().addAll(seriesTitleCol, seriesAvgUserRatingCol); // Only title and Avg User Rating
+        topSeriesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
+        topSeriesTable.setPrefHeight(250); // Limit height for visibility
+
+        mainBox.getChildren().add(topSeriesTable);
+        VBox.setVgrow(topSeriesTable, Priority.NEVER); // Don't grow series table excessively
+
+        return mainBox;
+    }
+
+    /**
+     * Populates the topMovies and topSeries lists based on rating criteria (>= 7.5).
+     */
+    private void populateTopContent() {
+        // Filter movies: ONLY by IMDb rating >= 7.5
+        List<Movie> filteredTopMovies = allMovies.stream()
+                .filter(movie -> movie.getImdbRating() >= 7.5)
+                .sorted(Comparator.comparingDouble(Movie::getImdbRating).reversed()) // Sort by IMDb rating
+                .collect(Collectors.toList());
+        topMovies.setAll(filteredTopMovies);
+
+        // Filter series: Remains by Average User Rating >= 7.5
+        List<Series> filteredTopSeries = allSeries.stream()
+                .filter(series -> series.getAverageUserRating() >= 7.5)
+                .sorted(Comparator.comparingDouble(Series::getAverageUserRating).reversed())
+                .collect(Collectors.toList());
+        topSeries.setAll(filteredTopSeries);
     }
 
     public static void main(String[] args) {
