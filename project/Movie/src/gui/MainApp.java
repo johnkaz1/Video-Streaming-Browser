@@ -15,6 +15,7 @@ import model.Director;
 import model.Movie;
 import model.Series;
 import model.Season; // Import Season class
+import model.Episode; // Assuming Episode is also in model package for total episodes calculation
 import utils.DataLoader;
 import java.util.Random;
 import model.User;
@@ -24,6 +25,7 @@ import javax.swing.JOptionPane;
 import exceptions.InvalidRatingException;
 
 import java.io.IOException;
+import java.time.LocalDate; // Import LocalDate for current year
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -244,13 +246,40 @@ public class MainApp extends Application {
             populateTopContent(); // New: Update top content after series seasons are updated
         });
 
+        // NEW: Create a new column for Total Episodes
+        TableColumn<Series, Integer> totalEpisodesCol = new TableColumn<>("Συνολικά Επεισόδια");
+        totalEpisodesCol.setCellValueFactory(cellData -> {
+            // It should calculate the sum of episodes across all seasons.
+            return new SimpleIntegerProperty(cellData.getValue().getTotalEpisodes()).asObject();
+        });
+        totalEpisodesCol.setPrefWidth(120); // Adjust width as needed
+
+        // Make Total Episodes column editable
+        totalEpisodesCol.setEditable(true); // Enable editing for this column
+        totalEpisodesCol.setCellFactory(TextFieldTableCell.forTableColumn(new IntegerStringConverter())); // Use TextFieldTableCell for integer input
+
+        // Handle commit event when total episodes count is edited
+        totalEpisodesCol.setOnEditCommit(event -> {
+            Series series = event.getRowValue();
+            int newTotalEpisodes = event.getNewValue(); // Get the new integer value
+
+            // IMPORTANT: This change will only be visible in the UI temporarily
+            // if getTotalEpisodes() is a calculated field.
+            // It will not persist in the underlying data unless you implement
+            // logic to update individual season episodes or a dedicated field.
+            showAlert("Προσοχή", "Το πεδίο 'Συνολικά Επεισόδια' είναι υπολογιζόμενο. Η αλλαγή δεν θα αποθηκευτεί μόνιμα εκτός εάν το μοντέλο δεδομένων υποστηρίζει την άμεση επεξεργασία του.", Alert.AlertType.WARNING);
+            seriesTable.refresh(); // Refresh to revert to the calculated value if it's derived
+            populateTopContent(); // Update top content
+        });
+
 
         TableColumn<Series, Number> avgUserRatingCol = new TableColumn<>("Μ.Ο. Χρηστών");
         avgUserRatingCol.setCellValueFactory(cellData ->
                 new SimpleDoubleProperty(cellData.getValue().getAverageUserRating()));
         avgUserRatingCol.setPrefWidth(100);
 
-        seriesTable.getColumns().addAll(titleCol, genreCol, seasonsCol, avgUserRatingCol);
+        // Add all columns including the new totalEpisodesCol
+        seriesTable.getColumns().addAll(titleCol, genreCol, seasonsCol, totalEpisodesCol, avgUserRatingCol);
         seriesTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
 
         mainBox.getChildren().addAll(searchPanel, new Separator(), seriesTable);
@@ -273,25 +302,23 @@ public class MainApp extends Application {
         if (newSeasonCount > currentSeasonCount) {
             // Add new seasons
             for (int i = currentSeasonCount + 1; i <= newSeasonCount; i++) {
-                // Assuming Season constructor takes season number and initializes with default episodes (e.g., 10)
-                Season newSeason = new Season(i);
+                // Fix: Pass both seasonNumber (i) and a year.
+                // For dynamically added seasons, current year is a reasonable default.
+                Season newSeason = new Season(i, LocalDate.now().getYear());
                 series.addSeason(newSeason);
             }
         } else if (newSeasonCount < currentSeasonCount) {
             // Remove seasons
             // Remove from the end to avoid shifting issues
-            for (int i = currentSeasonCount - 1; i >= newSeasonCount; i--) {
-                currentSeasons.remove(i);
+            for (int j = currentSeasonCount - 1; j >= newSeasonCount; j--) {
+                currentSeasons.remove(j);
             }
         }
         // No action needed if newSeasonCount == currentSeasonCount
 
         // Refresh the table to reflect changes (especially if the underlying data isn't directly observable)
-        // A more robust way is to re-filter and re-sort if necessary
-        // filteredSeries.setAll(allSeries.stream().sorted(Comparator.comparingDouble(Series::getAverageUserRating).reversed()).collect(Collectors.toList()));
-        // Or simply refresh the table view
         seriesTable.refresh();
-        performSeriesSearch(); // Re-apply filters and sort if needed, though refresh is usually enough for cell edits
+        performSeriesSearch(); // Re-apply filters and sort if needed
     }
 
 
@@ -459,7 +486,6 @@ public class MainApp extends Application {
 
         // Create rating form
         VBox ratingForm = new VBox(10);
-        ratingForm.setPadding(new Insets(15));
         ratingForm.setStyle("-fx-background-color: #f8f9fa; -fx-background-radius: 10; -fx-border-color: #dee2e6; -fx-border-radius: 10;");
 
         Label titleLabel = new Label("⭐ Αξιολόγηση Ταινίας");
@@ -819,10 +845,19 @@ public class MainApp extends Application {
 
             // Add seasons to the series
             int numberOfSeasons = addSeriesSeasonsSpinner.getValue();
+            int seriesStartYear = addSeriesYearSpinner.getValue(); // Get the year from the spinner
+
             for (int i = 1; i <= numberOfSeasons; i++) {
-                Season season = new Season(i); // Default 10 episodes per season
+                // Fix: Pass both season number and the series start year
+                Season season = new Season(i, seriesStartYear);
                 newSeries.addSeason(season);
             }
+
+            // When adding a new series, set its total episodes based on the seasons added
+            // This is a common approach if total episodes is a derived value upon creation
+            // This line assumes you have a setTotalEpisodes and calculateTotalEpisodesFromSeasons in your Series class
+            // newSeries.setTotalEpisodes(newSeries.calculateTotalEpisodesFromSeasons());
+
 
             showAlert("Επιτυχία", "Η σειρά προστέθηκε επιτυχώς με " + numberOfSeasons + " σεζόν!", Alert.AlertType.INFORMATION);
 
@@ -1062,11 +1097,6 @@ public class MainApp extends Application {
         movieImdbCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getImdbRating()));
         movieImdbCol.setPrefWidth(80);
 
-        // Removed: movieAvgUserRatingCol from topMovieTable
-        // TableColumn<Movie, Number> movieAvgUserRatingCol = new TableColumn<>("Μ.Ο. Χρηστών");
-        // movieAvgUserRatingCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getAverageUserRating()));
-        // movieAvgUserRatingCol.setPrefWidth(100);
-
         topMovieTable.getColumns().addAll(movieTitleCol, movieImdbCol); // Only title and IMDb
         topMovieTable.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         topMovieTable.setPrefHeight(250); // Limit height for visibility
@@ -1089,11 +1119,6 @@ public class MainApp extends Application {
         TableColumn<Series, Number> seriesAvgUserRatingCol = new TableColumn<>("Μ.Ο. Χρηστών");
         seriesAvgUserRatingCol.setCellValueFactory(cellData -> new SimpleDoubleProperty(cellData.getValue().getAverageUserRating()));
         seriesAvgUserRatingCol.setPrefWidth(100);
-
-        // Removed: seriesSeasonsCol from topSeriesTable
-        // TableColumn<Series, Number> seriesSeasonsCol = new TableColumn<>("Σεζόν");
-        // seriesSeasonsCol.setCellValueFactory(cellData -> new SimpleIntegerProperty(cellData.getValue().getSeasons().size()).asObject());
-        // seriesSeasonsCol.setPrefWidth(80);
 
 
         topSeriesTable.getColumns().addAll(seriesTitleCol, seriesAvgUserRatingCol); // Only title and Avg User Rating

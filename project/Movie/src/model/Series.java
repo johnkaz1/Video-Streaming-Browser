@@ -66,6 +66,15 @@ public class Series {
         this.genre = genre;
     }
 
+    // Inside your Series.java class
+    public int getTotalEpisodes() {
+        int totalEpisodes = 0;
+        for (Season season : this.getSeasons()) { // Assuming getSeasons() returns a List<Season>
+            totalEpisodes += season.getEpisodes().size(); // Assuming getEpisodes() returns a List<Episode>
+        }
+        return totalEpisodes;
+    }
+
     @Override
     public String toString() {
         return "Series{" +

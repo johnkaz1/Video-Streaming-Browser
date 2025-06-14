@@ -4,13 +4,16 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Season {
-    private static int counter = 1;
-    private final int id;
+    // Removed 'counter' and 'id' if they are not explicitly used elsewhere
+    // If 'id' is important for unique identification, you might keep it and manage it differently,
+    // but for linking episodes to seasons, 'seasonNumber' is more direct.
+    private int seasonNumber; // New field to store the explicit season number
     private int year;
     private List<Episode> episodes;
 
-    public Season(int year) {
-        this.id = counter++;
+    // Updated constructor to accept both seasonNumber and year
+    public Season(int seasonNumber, int year) {
+        this.seasonNumber = seasonNumber; // Initialize the new seasonNumber field
         this.year = year;
         this.episodes = new ArrayList<>();
     }
@@ -23,13 +26,22 @@ public class Season {
         return episodes;
     }
 
+    // New getter for seasonNumber, which is crucial for DataLoader
+    public int getSeasonNumber() {
+        return seasonNumber;
+    }
+
+    // Existing getter for year (renamed for clarity from 'etos' in toString to 'year' in getter)
+    public int getYear() {
+        return year;
+    }
 
     @Override
     public String toString() {
         return "Season{" +
-               "id=" + id +
-               ", etos=" + year +
-               ", episodes=" + episodes.size() +
-               '}';
+                "seasonNumber=" + seasonNumber + // Use seasonNumber in toString
+                ", year=" + year +
+                ", episodes=" + episodes.size() +
+                '}';
     }
 }
