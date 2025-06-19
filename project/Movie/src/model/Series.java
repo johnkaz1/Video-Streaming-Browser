@@ -69,8 +69,8 @@ public class Series {
     // Inside your Series.java class
     public int getTotalEpisodes() {
         int totalEpisodes = 0;
-        for (Season season : this.getSeasons()) { // Assuming getSeasons() returns a List<Season>
-            totalEpisodes += season.getEpisodes().size(); // Assuming getEpisodes() returns a List<Episode>
+        for (Season season : this.getSeasons()) {
+            totalEpisodes += season.getEpisodes().size();
         }
         return totalEpisodes;
     }
